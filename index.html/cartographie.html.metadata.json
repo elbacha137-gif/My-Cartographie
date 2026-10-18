@@ -1,5 +1,0 @@
-{
-  "summary": "Updated academic cartographie:\n- REMOVED: all automatic presentation/auto-cycle features (countdown ring, progress bar, auto-advance timer, status indicator, cycle counter badge)\n- KEPT: all floating node animations, thick SVG connection lines with animated gradient flow, cinematic transitions, Unsplash photos, pulse ring on active node, keyboard arrow navigation, draw-on-load line effect\n- ADDED: slow automatic upward scroll of side panel content when a node is opened (pauses on manual scroll, resumes after 2s)\n- ADDED: elegant 'Équipe de Recherche' academic card in the bottom-left of the canvas showing all 7 group member names with Cinzel serif typography",
-  "updatedAt": "2026-10-18T18:04:55.318097Z",
-  "userFacing": true
-}
