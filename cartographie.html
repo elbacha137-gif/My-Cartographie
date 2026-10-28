@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartographie Systémique — Les Métiers de la Communication Digitale</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg: #F7F5F0;
+      --bg-grid: rgba(180,170,155,0.18);
+      --paper: #FFFFFF;
+      --navy: #0D1B2A;
+      --ink: #1A1A2E;
+      --slate: #4A5568;
+      --muted: #718096;
+      --border: #E2E8E0;
+      --accent: #0B6E8C;
+      --accent-light: #E8F4F8;
+      --gold: #C19A49;
+      --gold-dark: #8B6914;
+      --gold-light: #FDF8EE;
+      --panel-w: 480px;
+      --ease-cinema: cubic-bezier(0.16, 1, 0.3, 1);
+      --serif: 'Playfair Display', Georgia, serif;
+      --caps: 'Cinzel', serif;
+      --sans: 'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+      background-color: var(--bg);
+    }
+
+    /* ─── Subtle Academic Grid Background ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+      background-size: 52px 52px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Canvas ─── */
+    #canvas {
+      position: relative;
+      width: 100%; height: 100%;
+      z-index: 1;
+      transition: transform 0.85s var(--ease-cinema);
+      will-change: transform;
+    }
+    #canvas.shifted { transform: translateX(calc(-1 * var(--panel-w) / 2)); }
+
+    /* ─── SVG Layer ─── */
+    #edges-svg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ─── Node Anchors ─── */
+    .anchor {
+      position: absolute;
+      width: 0; height: 0;
+      z-index: 4;
+    }
+
+    /* ─── Central Hub ─── */
+    .hub {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 230px; height: 230px;
+      border-radius: 50%;
+      background: linear-gradient(148deg, #0D1B2A 0%, #1B3451 60%, #0D2138 100%);
+      color: #FFFFFF;
+      font-family: var(--serif);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 26px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 10;
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow:
+        0 24px 56px rgba(13,27,42,0.28),
+        0 6px 18px rgba(13,27,42,0.14),
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        0 0 0 8px rgba(13,27,42,0.06);
+      transition: transform 0.5s var(--ease-cinema), box-shadow 0.5s ease;
+    }
+    .hub:hover {
+      transform: translate(-50%, -50%) scale(1.03);
+      box-shadow:
+        0 28px 64px rgba(13,27,42,0.34),
+        0 0 0 12px rgba(11,110,140,0.14);
+    }
+    .hub-subtitle {
+      margin-top: 10px;
+      font-family: var(--sans);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      border-top: 1px solid rgba(255,255,255,0.18);
+      padding-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ─── Branch Nodes ─── */
+    .node {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 152px; height: 152px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 2px solid var(--border);
+      color: var(--navy);
+      font-family: var(--serif);
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow:
+        0 8px 28px rgba(13,27,42,0.07),
+        0 2px 6px rgba(13,27,42,0.04);
+      transition: border-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease, background 0.4s ease;
+      will-change: transform;
+    }
+    .node:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 14px 38px rgba(11,110,140,0.16), 0 3px 8px rgba(13,27,42,0.04);
+    }
+    .node.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+      box-shadow: 0 18px 44px rgba(11,110,140,0.22), 0 0 0 5px rgba(11,110,140,0.12);
+    }
+    .node-num {
+      font-family: var(--caps);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .node.active .node-num { color: var(--accent); opacity: 0.7; }
+
+    /* ─── Idle Floating Animations ─── */
+    @keyframes f0 { 0%,100%{transform:translate(-50%,-50%) translateY(0)} 50%{transform:translate(-50%,-50%) translateY(-7px)} }
+    @keyframes f1 { 0%,100%{transform:translate(-50%,-50%) translateY(0)} 50%{transform:translate(-50%,-50%) translateY(6px)} }
+    @keyframes f2 { 0%,100%{transform:translate(-50%,-50%) translateX(0)} 50%{transform:translate(-50%,-50%) translateX(-7px)} }
+    @keyframes f3 { 0%,100%{transform:translate(-50%,-50%) translateY(0) translateX(0)} 50%{transform:translate(-50%,-50%) translateY(-5px) translateX(4px)} }
+    @keyframes f4 { 0%,100%{transform:translate(-50%,-50%) translateX(0) translateY(0)} 50%{transform:translate(-50%,-50%) translateX(7px) translateY(-4px)} }
+    @keyframes f5 { 0%,100%{transform:translate(-50%,-50%) translateY(0)} 50%{transform:translate(-50%,-50%) translateY(7px)} }
+    @keyframes f6 { 0%,100%{transform:translate(-50%,-50%) translateX(0) translateY(0)} 50%{transform:translate(-50%,-50%) translateX(-5px) translateY(5px)} }
+
+    .fa0{animation:f0 6.2s ease-in-out infinite}
+    .fa1{animation:f1 6.8s ease-in-out infinite .7s}
+    .fa2{animation:f2 6.4s ease-in-out infinite 1.4s}
+    .fa3{animation:f3 5.9s ease-in-out infinite 2.1s}
+    .fa4{animation:f4 7.1s ease-in-out infinite 2.8s}
+    .fa5{animation:f5 6.3s ease-in-out infinite 3.5s}
+    .fa6{animation:f6 6.6s ease-in-out infinite 4.2s}
+
+    /* ─── Pulse Ring on Active Node ─── */
+    @keyframes pulseRing {
+      0% { transform: translate(-50%,-50%) scale(1); opacity: 0.55; }
+      100% { transform: translate(-50%,-50%) scale(1.38); opacity: 0; }
+    }
+    .node-pulse {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 152px; height: 152px;
+      border-radius: 50%;
+      border: 2.5px solid var(--accent);
+      animation: pulseRing 2.2s ease-out infinite;
+      pointer-events: none;
+    }
+
+    /* ─── Side Panel ─── */
+    #panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: var(--panel-w);
+      max-width: 94vw;
+      height: 100%;
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-left: 1px solid var(--border);
+      box-shadow: -20px 0 60px rgba(13,27,42,0.09);
+      z-index: 200;
+      transform: translateX(100%);
+      transition: transform 0.85s var(--ease-cinema);
+      overflow-y: auto;
+      overflow-x: hidden;
+      will-change: transform;
+      scroll-behavior: smooth;
+    }
+    #panel.open { transform: translateX(0); }
+
+    #panel::-webkit-scrollbar { width: 4px; }
+    #panel::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+    /* ─── Panel sticky header ─── */
+    .panel-topbar {
+      position: sticky;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 20px;
+      background: rgba(255,255,255,0.96);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+    .panel-topbar-label {
+      font-family: var(--caps);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .close-btn {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--slate);
+      font-size: 14px;
+      transition: all 0.25s ease;
+    }
+    .close-btn:hover { background: var(--bg); color: var(--navy); border-color: var(--navy); }
+
+    /* Scroll hint bar */
+    #scroll-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 20px;
+      background: var(--gold-light);
+      border-bottom: 1px solid #e8e0cc;
+      font-family: var(--sans);
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--gold-dark);
+      letter-spacing: 0.04em;
+    }
+    @keyframes scrollArrow {
+      0%,100%{transform:translateY(0)} 50%{transform:translateY(3px)}
+    }
+    #scroll-hint .arrow {
+      display: inline-block;
+      animation: scrollArrow 1.4s ease-in-out infinite;
+    }
+
+    .panel-body {
+      padding: 32px 36px 52px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.55s var(--ease-cinema) 0.2s, transform 0.55s var(--ease-cinema) 0.2s;
+    }
+    #panel.open .panel-body { opacity: 1; transform: translateY(0); }
+
+    /* Photo */
+    .photo-wrap {
+      position: relative;
+      width: 100%; height: 200px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 28px rgba(13,27,42,0.09);
+      background: #DDE5EC;
+    }
+    .photo-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.9s var(--ease-cinema);
+    }
+    .photo-wrap:hover img { transform: scale(1.04); }
+    .photo-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(13,27,42,0.65) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .photo-caption {
+      position: absolute;
+      bottom: 12px; left: 14px; right: 14px;
+      font-family: var(--sans);
+      font-size: 10px; font-weight: 500;
+      color: #FFF;
+      letter-spacing: 0.06em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      pointer-events: none;
+      display: flex; justify-content: space-between;
+    }
+    .photo-index {
+      position: absolute;
+      top: 12px; left: 14px;
+      font-family: var(--caps);
+      font-size: 11px; font-weight: 600;
+      color: #FFF; letter-spacing: 0.12em;
+      background: rgba(13,27,42,0.55);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
+    /* Content */
+    .panel-badge {
+      font-family: var(--sans);
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 7px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .panel-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      background: var(--accent); border-radius: 50%;
+    }
+    .panel-title {
+      font-family: var(--serif);
+      font-size: 27px; font-weight: 700;
+      color: var(--navy);
+      line-height: 1.22;
+      margin-bottom: 26px;
+      letter-spacing: -0.01em;
+    }
+    .rubric {
+      font-family: var(--caps);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+    }
+    .def-text {
+      font-family: var(--sans);
+      font-size: 13.5px; font-weight: 400;
+      line-height: 1.8;
+      color: var(--ink);
+      margin-bottom: 26px;
+      text-align: justify;
+    }
+    .missions { list-style: none; margin-bottom: 28px; }
+    .missions li {
+      position: relative;
+      padding-left: 22px;
+      font-family: var(--sans);
+      font-size: 13px; line-height: 1.68;
+      color: var(--ink);
+      margin-bottom: 13px;
+    }
+    .missions li::before {
+      content: '—';
+      position: absolute; left: 0;
+      color: var(--accent); font-weight: 700;
+    }
+    .citation-box {
+      background: #F6F9FA;
+      border: 1px solid var(--border);
+      border-left: 3.5px solid var(--accent);
+      border-radius: 4px;
+      padding: 14px 18px;
+      margin-top: 8px;
+    }
+    .citation-box p {
+      font-family: var(--sans);
+      font-size: 11.5px; line-height: 1.65;
+      color: var(--slate);
+    }
+
+    /* ─── UI: Header ─── */
+    .ui-header {
+      position: fixed; top: 24px; left: 30px;
+      z-index: 50; pointer-events: none;
+    }
+    .ui-header h1 {
+      font-family: var(--serif);
+      font-size: 18px; font-weight: 700;
+      color: var(--navy); letter-spacing: 0.015em;
+    }
+    .ui-header p {
+      font-family: var(--sans);
+      font-size: 11px; color: var(--muted);
+      margin-top: 3px; letter-spacing: 0.03em;
+    }
+
+    /* ─── UI: Navigation hint ─── */
+    .nav-hint {
+      position: fixed; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 50; pointer-events: none;
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      color: var(--muted);
+      background: rgba(255,255,255,0.9);
+      padding: 6px 18px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      transition: opacity 0.4s ease;
+    }
+    .nav-hint.hidden { opacity: 0; }
+
+    /* ─── ÉQUIPE DE RECHERCHE CARD ─── */
+    #team-card {
+      position: fixed;
+      bottom: 24px; right: 30px;
+      z-index: 50;
+      background: rgba(255,255,255,0.93);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 8px 28px rgba(13,27,42,0.08);
+      backdrop-filter: blur(10px);
+      min-width: 215px;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    #team-card.hidden-card {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+    .team-card-header {
+      font-family: var(--caps);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 10px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #e8dfc8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .team-card-header::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+    .team-member {
+      font-family: var(--sans);
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--navy);
+      line-height: 1.55;
+      padding: 2px 0;
+    }
+    .team-member:not(:last-child) {
+      border-bottom: 1px solid rgba(226,232,224,0.6);
+    }
+    .team-member span {
+      font-weight: 400;
+      color: var(--slate);
+      font-size: 10.5px;
+      margin-left: 4px;
+    }
+
+    /* ─── Footer ─── */
+    .ui-footer {
+      position: fixed; bottom: 20px; left: 30px;
+      z-index: 50; pointer-events: none;
+      font-family: var(--sans); font-size: 10.5px;
+      color: var(--muted); opacity: 0.75;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 960px) {
+      :root { --panel-w: 100vw; }
+      #canvas.shifted { transform: translateX(0); }
+      .hub { width: 185px; height: 185px; font-size: 13.5px; padding: 18px; }
+      .node { width: 128px; height: 128px; font-size: 11.5px; padding: 13px; }
+      #team-card { right: 10px; bottom: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ─── -->
+  <div class="ui-header">
+    <h1>Cartographie Systémique</h1>
+    <p>Sciences de la Communication Digitale — Séminaire Académique</p>
+  </div>
+
+  <!-- ─── Navigation hint ─── -->
+  <div class="nav-hint" id="nav-hint">
+    Cliquez sur un nœud · ← → Naviguer · Centre = Réinitialiser la vue
+  </div>
+
+  <!-- ─── Main Canvas ─── -->
+  <div id="canvas">
+    <svg id="edges-svg">
+      <defs>
+        <linearGradient id="grad-default" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#8FA3B1" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#B8CBDA" stop-opacity="0.5"/>
+        </linearGradient>
+        <linearGradient id="grad-active" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0B6E8C"/>
+          <stop offset="50%" stop-color="#1A9BBF"/>
+          <stop offset="100%" stop-color="#C19A49"/>
+        </linearGradient>
+        <linearGradient id="grad-flow" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0B6E8C" stop-opacity="0">
+            <animate attributeName="offset" values="0;1" dur="2.5s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="20%" stop-color="#1A9BBF" stop-opacity="0.9">
+            <animate attributeName="offset" values="0.2;1.2" dur="2.5s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="40%" stop-color="#C19A49" stop-opacity="0">
+            <animate attributeName="offset" values="0.4;1.4" dur="2.5s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <!-- Central Hub -->
+    <div class="anchor" id="a-center">
+      <div class="hub" id="center-hub" title="Cliquer pour réinitialiser">
+        <span>Les Métiers de la<br/>Communication<br/>Digitale</span>
+        <span class="hub-subtitle">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Réinitialiser la vue
+        </span>
+      </div>
+    </div>
+
+    <!-- 6 Branch Nodes -->
+    <div class="anchor" id="a-0"><div class="node fa0" data-idx="0"><span class="node-num">I</span><span>Social Media<br/>Manager</span></div></div>
+    <div class="anchor" id="a-1"><div class="node fa1" data-idx="1"><span class="node-num">II</span><span>Créateur de Contenu<br/><small style="font-size:10px;opacity:0.7;font-family:var(--sans)">Graphiste Digital</small></span></div></div>
+    <div class="anchor" id="a-2"><div class="node fa2" data-idx="2"><span class="node-num">III</span><span>Media Buyer<br/><small style="font-size:10px;opacity:0.7;font-family:var(--sans)">Spécialiste Ads</small></span></div></div>
+    <div class="anchor" id="a-3"><div class="node fa3" data-idx="3"><span class="node-num">IV</span><span>Community<br/>Manager</span></div></div>
+    <div class="anchor" id="a-4"><div class="node fa4" data-idx="4"><span class="node-num">V</span><span>Chef de Projet<br/>Digital</span></div></div>
+    <div class="anchor" id="a-5"><div class="node fa5" data-idx="5"><span class="node-num">VI</span><span>UX/UI<br/>Designer</span></div></div>
+  </div>
+
+  <!-- ─── Academic Side Panel ─── -->
+  <div id="panel">
+    <div class="panel-topbar">
+      <span class="panel-topbar-label">Notice Monographique</span>
+      <button class="close-btn" id="close-btn" title="Fermer (Échap)">✕</button>
+    </div>
+    <!-- Slow scroll indicator -->
+    <div id="scroll-hint">
+      <span class="arrow">↓</span>
+      <span>Défilement automatique activé — faites défiler pour reprendre le contrôle</span>
+    </div>
+    <div class="panel-body" id="panel-body">
+      <div class="photo-wrap">
+        <img id="p-photo" src="" alt="" />
+        <div class="photo-overlay"></div>
+        <div class="photo-index" id="p-index">I</div>
+        <div class="photo-caption">
+          <span id="p-caption">—</span>
+          <span style="opacity:0.8">Étude Monographique</span>
+        </div>
+      </div>
+
+      <div class="panel-badge">Fiche Métier</div>
+      <h2 class="panel-title" id="p-title"></h2>
+
+      <div class="rubric">Définition Conceptuelle</div>
+      <p class="def-text" id="p-def"></p>
+
+      <div class="rubric">Périmètre d'Action — Missions</div>
+      <ul class="missions" id="p-missions"></ul>
+
+      <div class="rubric">Référence Bibliographique</div>
+      <div class="citation-box" id="p-citation"></div>
+    </div>
+  </div>
+
+  <!-- ─── Équipe de Recherche Card ─── -->
+  <div id="team-card">
+    <div class="team-card-header">Équipe de Recherche</div>
+    <div class="team-member">Walid EL BACHA</div>
+    <div class="team-member">Adam Belaadi</div>
+    <div class="team-member">Asmae Ayni</div>
+    <div class="team-member">Fouad Akaarire</div>
+    <div class="team-member">Hafsa Khattabi</div>
+    <div class="team-member">Oissal El Filalli</div>
+    <div class="team-member">Lina Teffahi</div>
+  </div>
+
+  <!-- ─── Footer ─── -->
+  <div class="ui-footer">Norme APA (7e éd.) · Communication Digitale · 2026</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ═══ DATA ═══ */
+  const professions = [
+    {
+      titre: "Social Media Manager",
+      romanNum: "I",
+      photo: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=900&q=80",
+      caption: "Stratégie de Diffusion Réticulaire",
+      definition: "Le Social Media Manager est le stratège responsable de la modélisation, du déploiement et de la gouvernance de l'expression institutionnelle au sein des plateformes socionumériques. Il synchronise les impératifs communicationnels de l'organisation avec les logiques algorithmiques et les régimes d'attention contemporains.",
+      missions: [
+        "Concevoir et orchestrer la ligne éditoriale transmédia en adéquation avec le capital réputationnel et l'identité de marque.",
+        "Superviser les métriques d'engagement (KPI) via des modèles d'analyse quantitative pour réorienter l'action communicationnelle.",
+        "Structurer la veille heuristique et prospective relative aux mutations sociotechniques des plateformes numériques."
+      ],
+      citation: "Kaplan, A. M., & Haenlein, M. (2010). Users of the world, unite! The challenges and opportunities of Social Media. <em>Business Horizons</em>, 53(1), 59–68. https://doi.org/10.1016/j.bushor.2009.09.003"
+    },
+    {
+      titre: "Créateur de Contenu / Graphiste Digital",
+      romanNum: "II",
+      photo: "https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=900&q=80",
+      caption: "Sémiotique Visuelle & Création Numérique",
+      definition: "Ce professionnel assure la médiation symbolique et esthétique des discours par la production d'artefacts visuels, textuels et multimodaux adaptés aux écrans contemporains. Sa pratique relève d'une articulation savante entre sémiotique de l'image, ergonomie cognitive et affordances des interfaces numériques.",
+      missions: [
+        "Élaborer des grammaires visuelles cohérentes garantissant la continuité plastique et sémantique des supports de diffusion.",
+        "Adapter les artéfacts multimédias aux contraintes techniques de compression, de lisibilité multisupport et d'accessibilité.",
+        "Opérer une hybridation continue entre narrations textuelles et visuelles (data-visualisation, infographies, micro-vidéos)."
+      ],
+      citation: "Kress, G., & van Leeuwen, T. (2006). <em>Reading Images: The Grammar of Visual Design</em> (2e éd.). Routledge. https://doi.org/10.4324/9781003099857"
+    },
+    {
+      titre: "Media Buyer — Spécialiste Ads",
+      romanNum: "III",
+      photo: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80",
+      caption: "Acquisition Programmatique & Optimisation ROI",
+      definition: "L'acheteur média numérique pilote l'acquisition stratégique d'inventaires publicitaires par l'entremise des écosystèmes d'enchères en temps réel (RTB) et des plateformes programmatiques. Sa démarche s'appuie sur une méthodologie d'allocation budgétaire probabiliste et de modélisation prédictive des comportements cibles.",
+      missions: [
+        "Paramétrer et arbitrer les investissements sur les régies publicitaires automatisées (Google Ads, Meta Ads, DSP).",
+        "Mener des expérimentations empiriques continues (A/B testing, cohortes comportementales) pour maximiser le rendement du capital investi.",
+        "Formaliser les modèles d'attribution multi-touch et d'évaluation du coût marginal d'acquisition utilisateur (CAC)."
+      ],
+      citation: "Chaffey, D., & Ellis-Chadwick, F. (2019). <em>Digital Marketing: Strategy, Implementation and Practice</em> (7e éd.). Pearson Education. ISBN : 978-1292241579."
+    },
+    {
+      titre: "Community Manager",
+      romanNum: "IV",
+      photo: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80",
+      caption: "Médiation Relationnelle & Animation Communautaire",
+      definition: "Acteur de la médiation relationnelle directe, le Community Manager stimule et régule les dynamiques interactionnelles unissant une organisation à ses collectifs numériques. Il préserve le contrat fiduciaro-communicationnel en mobilisant des compétences d'empathie discursive, d'écoute active et de gestion de crise.",
+      missions: [
+        "Instaurer des rituels conversationnels visant à consolider le sentiment d'appartenance et l'attachement symbolique à la communauté.",
+        "Appliquer des protocoles de médiation et de résolution des controverses pour neutraliser les risques de déflagration réputationnelle.",
+        "Convertir les retours d'expérience qualitatifs des usagers en préconisations pour les équipes de conception et de service."
+      ],
+      citation: "Fournier, S., & Avery, J. (2011). The uninvited brand. <em>Business Horizons</em>, 54(3), 193–207. https://doi.org/10.1016/j.bushor.2011.01.001"
+    },
+    {
+      titre: "Chef de Projet Digital",
+      romanNum: "V",
+      photo: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=900&q=80",
+      caption: "Gouvernance de Projets & Méthodes Agiles",
+      definition: "Le Chef de Projet Digital orchestre l'interdépendance des corps de métiers techniques, créatifs et stratégiques lors de la fabrication d'un dispositif numérique. Il garantit l'alignement entre les objectifs axiologiques du commanditaire et les contingences matérielles, temporelles et financières.",
+      missions: [
+        "Formaliser les cahiers des charges fonctionnels et les architectures de découpage du projet (méthodologies Agile/Scrum).",
+        "Arbitrer les tensions inhérentes au triangle vertueux coût-délais-qualité lors des cycles de développement itératifs.",
+        "Garantir la livraison d'un système numérique éprouvé par des protocoles rigoureux de recettage et de contrôle qualité."
+      ],
+      citation: "Wysocki, R. K. (2019). <em>Effective Project Management: Traditional, Agile, Extreme, Hybrid</em> (8e éd.). John Wiley & Sons. ISBN : 978-1119562801."
+    },
+    {
+      titre: "UX/UI Designer",
+      romanNum: "VI",
+      photo: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=900&q=80",
+      caption: "Ergonomie Cognitive & Systèmes d'Interaction",
+      definition: "L'UX/UI Designer formule les affordances et l'agencement sémiologique des interfaces numériques à partir de l'observation empirique de l'expérience usager. Sa pratique articule psychologie cognitive, typographie computationnelle et ergonomie de l'interaction homme-machine.",
+      missions: [
+        "Conduire des recherches usagers approfondies (entretiens semi-directifs, cartographie d'expérience, tests d'utilisabilité normés).",
+        "Édifier des systèmes de conception modulaires (Design Systems) garantissant la cohérence ergonomique et l'accessibilité universelle.",
+        "Prototyper des micro-interactions optimisant la fluidité perceptive et minimisant la charge cognitive de l'opérateur."
+      ],
+      citation: "Norman, D. A. (2013). <em>The Design of Everyday Things</em> (éd. revue et augmentée). Basic Books. ISBN : 978-0465050659."
+    }
+  ];
+
+  /* ═══ DOM REFS ═══ */
+  const canvas    = document.getElementById('canvas');
+  const svgEl     = document.getElementById('edges-svg');
+  const hub       = document.getElementById('center-hub');
+  const aCenter   = document.getElementById('a-center');
+  const nodes     = document.querySelectorAll('.node');
+  const panel     = document.getElementById('panel');
+  const closeBtn  = document.getElementById('close-btn');
+  const navHint   = document.getElementById('nav-hint');
+  const teamCard  = document.getElementById('team-card');
+
+  const pPhoto    = document.getElementById('p-photo');
+  const pCaption  = document.getElementById('p-caption');
+  const pIndex    = document.getElementById('p-index');
+  const pTitle    = document.getElementById('p-title');
+  const pDef      = document.getElementById('p-def');
+  const pMissions = document.getElementById('p-missions');
+  const pCitation = document.getElementById('p-citation');
+
+  /* ═══ STATE ═══ */
+  let currentIdx  = -1;
+  let lineEls     = [];
+  let pulseEl     = null;
+  let rafId       = null;
+
+  /* ─── Auto-scroll state ─── */
+  let scrollRafId       = null;
+  let scrollPaused      = false;
+  let scrollResumeTimer = null;
+  const SCROLL_SPEED    = 22; // px per second — slow enough to read comfortably
+  let lastScrollTime    = null;
+
+  /* ═══ GEOMETRY ═══ */
+  function layout() {
+    const W = window.innerWidth, H = window.innerHeight;
+    const cx = W / 2, cy = H / 2;
+
+    aCenter.style.left = cx + 'px';
+    aCenter.style.top  = cy + 'px';
+
+    const rx = Math.min(W * 0.33, 415);
+    const ry = Math.min(H * 0.36, 325);
+    const N  = nodes.length;
+    const a0 = -Math.PI / 2;
+
+    nodes.forEach((node, i) => {
+      const anchor = document.getElementById(`a-${i}`);
+      const angle  = a0 + (2 * Math.PI * i) / N;
+      anchor.style.left = (cx + rx * Math.cos(angle)) + 'px';
+      anchor.style.top  = (cy + ry * Math.sin(angle)) + 'px';
+    });
+
+    rebuildLines();
+  }
+
+  /* ═══ LINES ═══ */
+  function rebuildLines() {
+    svgEl.querySelectorAll('.edge-main, .edge-flow').forEach(l => l.remove());
+    lineEls = [];
+
+    nodes.forEach((_, i) => {
+      const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l.classList.add('edge-main');
+      l.setAttribute('stroke-linecap', 'round');
+      svgEl.appendChild(l);
+
+      const lf = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      lf.classList.add('edge-flow');
+      lf.setAttribute('stroke-linecap', 'round');
+      lf.setAttribute('stroke-width', '0');
+      svgEl.appendChild(lf);
+
+      lineEls.push({ main: l, flow: lf });
+    });
+
+    // Draw-on-load animation
+    setTimeout(() => {
+      const hb = hub.getBoundingClientRect();
+      const hx = hb.left + hb.width / 2, hy = hb.top + hb.height / 2;
+      nodes.forEach((node, i) => {
+        const nb  = node.getBoundingClientRect();
+        const nx  = nb.left + nb.width / 2, ny = nb.top + nb.height / 2;
+        const len = Math.hypot(nx - hx, ny - hy);
+        const { main } = lineEls[i];
+        main.style.strokeDasharray  = len;
+        main.style.strokeDashoffset = len;
+        main.style.transition = `stroke-dashoffset 1.0s cubic-bezier(0.16,1,0.3,1) ${0.15 + i * 0.07}s`;
+        requestAnimationFrame(() => { main.style.strokeDashoffset = '0'; });
+      });
+      setTimeout(() => {
+        nodes.forEach((_, i) => {
+          lineEls[i].main.style.transition     = '';
+          lineEls[i].main.style.strokeDasharray  = 'none';
+          lineEls[i].main.style.strokeDashoffset = '0';
+        });
+      }, 1800);
+    }, 300);
+  }
+
+  /* Sync line positions every frame (because nodes float) */
+  function syncLines() {
+    const hb = hub.getBoundingClientRect();
+    const hx = hb.left + hb.width / 2, hy = hb.top + hb.height / 2;
+
+    nodes.forEach((node, i) => {
+      const nb = node.getBoundingClientRect();
+      const nx = nb.left + nb.width / 2, ny = nb.top + nb.height / 2;
+      const { main, flow } = lineEls[i];
+      const isActive = (i === currentIdx);
+
+      [main, flow].forEach(l => {
+        l.setAttribute('x1', hx); l.setAttribute('y1', hy);
+        l.setAttribute('x2', nx); l.setAttribute('y2', ny);
+      });
+
+      if (isActive) {
+        main.setAttribute('stroke', 'url(#grad-active)');
+        main.setAttribute('stroke-width', '5');
+        flow.setAttribute('stroke', 'url(#grad-flow)');
+        flow.setAttribute('stroke-width', '4');
+      } else {
+        main.setAttribute('stroke', 'url(#grad-default)');
+        main.setAttribute('stroke-width', '3');
+        flow.setAttribute('stroke-width', '0');
+      }
+    });
+  }
+
+  function rafLoop() {
+    syncLines();
+    rafId = requestAnimationFrame(rafLoop);
+  }
+
+  /* ═══ AUTO-SCROLL ═══ */
+  function startAutoScroll() {
+    stopAutoScroll();
+    scrollPaused  = false;
+    lastScrollTime = null;
+
+    // Wait 1.2s after panel opens before beginning scroll
+    setTimeout(() => {
+      if (currentIdx < 0) return; // Panel may have been closed already
+      scrollRafId = requestAnimationFrame(autoScrollStep);
+    }, 1200);
+  }
+
+  function autoScrollStep(ts) {
+    if (scrollPaused) {
+      lastScrollTime = null;
+      scrollRafId = requestAnimationFrame(autoScrollStep);
+      return;
+    }
+
+    if (!lastScrollTime) lastScrollTime = ts;
+    const delta = ts - lastScrollTime;
+    lastScrollTime = ts;
+
+    const px = (SCROLL_SPEED * delta) / 1000;
+    panel.scrollTop += px;
+
+    // Stop scrolling if we've reached the bottom
+    const atBottom = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 4;
+    if (!atBottom) {
+      scrollRafId = requestAnimationFrame(autoScrollStep);
+    }
+  }
+
+  function stopAutoScroll() {
+    if (scrollRafId) { cancelAnimationFrame(scrollRafId); scrollRafId = null; }
+    clearTimeout(scrollResumeTimer);
+    lastScrollTime = null;
+  }
+
+  /* Detect manual scroll → pause auto-scroll for 3s then resume */
+  panel.addEventListener('wheel', () => {
+    scrollPaused = true;
+    clearTimeout(scrollResumeTimer);
+    scrollResumeTimer = setTimeout(() => {
+      scrollPaused = false;
+      lastScrollTime = null;
+    }, 3000);
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', () => {
+    scrollPaused = true;
+    clearTimeout(scrollResumeTimer);
+    scrollResumeTimer = setTimeout(() => {
+      scrollPaused = false;
+      lastScrollTime = null;
+    }, 3000);
+  }, { passive: true });
+
+  /* ═══ PANEL OPEN / CLOSE ═══ */
+  function openPanel(idx) {
+    const d = professions[idx];
+    currentIdx = idx;
+
+    // Reset panel scroll to top before populating
+    panel.scrollTop = 0;
+
+    pPhoto.src   = d.photo;
+    pPhoto.alt   = d.titre;
+    pCaption.textContent = d.caption;
+    pIndex.textContent   = d.romanNum;
+    pTitle.textContent   = d.titre;
+    pDef.textContent     = d.definition;
+
+    pMissions.innerHTML = '';
+    d.missions.forEach(m => {
+      const li = document.createElement('li');
+      li.textContent = m;
+      pMissions.appendChild(li);
+    });
+    pCitation.innerHTML = '<p>' + d.citation + '</p>';
+
+    nodes.forEach((n, i) => n.classList.toggle('active', i === idx));
+
+    // Pulse ring
+    if (pulseEl) { pulseEl.remove(); pulseEl = null; }
+    const activeAnchor = document.getElementById(`a-${idx}`);
+    pulseEl = document.createElement('div');
+    pulseEl.className = 'node-pulse';
+    activeAnchor.appendChild(pulseEl);
+
+    panel.classList.add('open');
+    canvas.classList.add('shifted');
+    navHint.classList.add('hidden');
+    teamCard.classList.add('hidden-card');
+
+    // Start auto-scroll
+    startAutoScroll();
+  }
+
+  function closePanel() {
+    panel.classList.remove('open');
+    canvas.classList.remove('shifted');
+    nodes.forEach(n => n.classList.remove('active'));
+    currentIdx = -1;
+    navHint.classList.remove('hidden');
+    teamCard.classList.remove('hidden-card');
+    if (pulseEl) { pulseEl.remove(); pulseEl = null; }
+    stopAutoScroll();
+  }
+
+  /* ═══ EVENTS ═══ */
+  nodes.forEach(node => {
+    node.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = parseInt(node.dataset.idx, 10);
+      if (idx === currentIdx) { closePanel(); return; }
+      openPanel(idx);
+    });
+  });
+
+  hub.addEventListener('click', e => {
+    e.stopPropagation();
+    closePanel();
+  });
+
+  closeBtn.addEventListener('click', closePanel);
+
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target) && !e.target.closest('.node') && !e.target.closest('.hub')) {
+      closePanel();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closePanel(); return; }
+    if (e.key === 'ArrowRight') {
+      const next = ((currentIdx < 0 ? -1 : currentIdx) + 1 + professions.length) % professions.length;
+      openPanel(next);
+    }
+    if (e.key === 'ArrowLeft') {
+      const prev = ((currentIdx < 0 ? 0 : currentIdx) - 1 + professions.length) % professions.length;
+      openPanel(prev);
+    }
+  });
+
+  window.addEventListener('resize', layout);
+
+  /* ═══ INIT ═══ */
+  layout();
+  rafLoop();
+
+  // Entrance animation
+  hub.style.opacity = '0';
+  hub.style.transform = 'translate(-50%,-50%) scale(0.82)';
+  setTimeout(() => {
+    hub.style.transition = 'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)';
+    hub.style.opacity    = '1';
+    hub.style.transform  = 'translate(-50%,-50%) scale(1)';
+  }, 100);
+
+  nodes.forEach((node, i) => {
+    node.style.opacity = '0';
+    setTimeout(() => {
+      node.style.transition = 'opacity 0.6s cubic-bezier(0.16,1,0.3,1)';
+      node.style.opacity    = '1';
+    }, 220 + i * 80);
+  });
+
+})();
+</script>
+</body>
+</html>
